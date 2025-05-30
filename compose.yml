@@ -1,0 +1,70 @@
+volumes:
+  tailscale_state:
+  vaultwarden_data:
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    volumes:
+      - vaultwarden_data:/data
+      - ./config.json:/data/config.json
+    environment:
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=false
+      - ALLOW_SENDS=false
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURITY=${SMTP_SECURITY}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - INVITATION_ORG_NAME=${INVITATION_ORG_NAME}
+      - DOMAIN=https://${TAILSCALE_HOSTNAME}.${TAILSCALE_TAILNET}.ts.net
+      - IP_HEADER=X-Forwarded-For
+    depends_on:
+      tailscale:
+        condition: service_healthy
+        restart: true
+    network_mode: service:tailscale
+    healthcheck:
+      test: curl --fail http://localhost/alive || exit 1
+      start_period: 120s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - deunhealth.restart.on.unhealthy=true
+    restart: unless-stopped
+
+  tailscale:
+    image: tailscale/tailscale:latest
+    hostname: ${TAILSCALE_HOSTNAME}
+    environment:
+      - TS_EXTRA_ARGS=--advertise-tags=tag:container
+      - TS_TAILSCALED_EXTRA_ARGS=--no-logs-no-support
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/ts-serve.json
+      - TS_ENABLE_HEALTH_CHECK=true
+    volumes:
+      - tailscale_state:/var/lib/tailscale
+      - ./ts-serve.json:/config/ts-serve.json
+    healthcheck:
+      test: wget -q --tries=1 --spider http://127.0.0.1:9002/healthz || exit 1
+      start_period: 120s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - deunhealth.restart.on.unhealthy=true
+    restart: unless-stopped
+
+  deunhealth:
+    image: qmcgaw/deunhealth
+    environment:
+      - LOG_LEVEL=info
+      - HEALTH_SERVER_ADDRESS=127.0.0.1:9999
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: none
+    restart: always
