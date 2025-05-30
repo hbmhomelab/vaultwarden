@@ -7,7 +7,6 @@ services:
     image: vaultwarden/server:latest
     volumes:
       - vaultwarden_data:/data
-      - ./config.json:/data/config.json
     environment:
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=false
