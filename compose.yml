@@ -7,6 +7,7 @@ services:
     image: vaultwarden/server:latest
     volumes:
       - vaultwarden_data:/data
+      - ./logs:/var/log/vaultwarden
     environment:
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=false
@@ -21,6 +22,8 @@ services:
       - INVITATION_ORG_NAME=${INVITATION_ORG_NAME}
       - DOMAIN=https://${TAILSCALE_HOSTNAME}.${TAILSCALE_TAILNET}.ts.net
       - IP_HEADER=X-Forwarded-For
+      - LOG_FILE=/var/log/vaultwarden/vaultwarden.log
+      - LOG_LEVEL=info
     depends_on:
       tailscale:
         condition: service_healthy
