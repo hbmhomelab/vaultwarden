@@ -7,7 +7,6 @@ services:
     image: vaultwarden/server:latest
     volumes:
       - vaultwarden_data:/data
-      - ./config.json:/data/config.json
     environment:
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=false
@@ -36,7 +35,6 @@ services:
     labels:
       - deunhealth.restart.on.unhealthy=true
     restart: unless-stopped
-
   tailscale:
     image: tailscale/tailscale:latest
     hostname: ${TAILSCALE_HOSTNAME}
@@ -58,13 +56,3 @@ services:
     labels:
       - deunhealth.restart.on.unhealthy=true
     restart: unless-stopped
-
-  deunhealth:
-    image: qmcgaw/deunhealth
-    environment:
-      - LOG_LEVEL=info
-      - HEALTH_SERVER_ADDRESS=127.0.0.1:9999
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    network_mode: none
-    restart: always

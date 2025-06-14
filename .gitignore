@@ -17,4 +17,4 @@ tags
 
 ## Application
 .env
-config.json
+logs/
